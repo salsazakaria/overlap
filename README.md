@@ -2,6 +2,8 @@
 
 Find the hours your remote team actually shares.
 
+**Try it live → [overlap-io.netlify.app](https://overlap-io.netlify.app/)**
+
 Pick your cities, set everyone's working hours, and Overlap shows where the days meet, with the best window in everyone's local time. Drag a bar to shift someone's hours and watch the shared time grow. Copy the link to share the exact setup.
 
 ## Features
