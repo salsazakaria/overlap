@@ -66,11 +66,16 @@ h1 .dim{color:var(--muted)}
 .meta{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:4px 12px;align-items:center}
 .av{grid-column:1;grid-row:1/3;width:44px;height:44px;border-radius:50%;border:0;font:600 14px 'Inter Tight',sans-serif;color:#141414;transition:transform .25s cubic-bezier(.34,1.7,.64,1)}
 .av:hover{transform:rotate(-8deg) scale(1.06)}
-.city{grid-column:2;grid-row:1;justify-self:start;max-width:100%;border:0;background:none;padding:0;font-weight:600;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}
-.city:hover{text-decoration:underline;text-underline-offset:3px}
+.id{grid-column:2;grid-row:1;display:flex;align-items:baseline;gap:8px;min-width:0}
+.who{field-sizing:content;width:auto;min-width:3.4em;max-width:11em;flex:none;border:0;background:none;padding:2px 6px;margin-left:-6px;border-radius:8px;font-weight:600;font-size:16px;color:var(--ink)}
+.who::placeholder{color:var(--muted);font-weight:500}
+.who:hover{background:var(--soft)}.who:focus{background:var(--soft);outline:none}
+.city{border:0;background:none;padding:0;font-size:13px;color:var(--muted);text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tl{grid-column:2;font-weight:600}
+.city:hover{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 .sub{grid-column:2/4;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .sub select{appearance:none;border:0;background:var(--soft);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
-.now{font-size:13px;font-weight:400;margin-left:4px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.now{font-size:13px;font-weight:400;margin-left:2px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 .x{width:28px;height:28px;border-radius:50%;border:0;background:var(--soft);color:var(--muted);font-size:16px;line-height:1;grid-column:3;grid-row:1}
 .x:hover{color:var(--ink)}
 .track{position:relative;height:52px;border-radius:18px;background:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px calc(100%/24)),color-mix(in srgb,var(--ink) 2.5%,transparent);touch-action:pan-y}
@@ -113,6 +118,7 @@ h1 .dim{color:var(--muted)}
 .shake{animation:shake .45s}
 @keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
 @media(max-width:900px){:root{--lab:230px;--gap:16px}.city .now{display:none}}
+@media(max-width:600px){.who{font-size:16px}}
 @media(max-width:600px){
   :root{--lab:0px;--gap:0px}
   .wrap{padding-top:14px}
@@ -176,14 +182,14 @@ h1 .dim{color:var(--muted)}
       <div class="ov2"><div class="hov" id="hov"><div class="tip" id="tip"></div></div></div>
       <div id="rows" style="display:contents"></div>
       <div class="row tog">
-        <div class="meta"><div class="av"><svg viewBox="0 0 38 26"><circle cx="14" cy="13" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="24" cy="13" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></div><span class="city" style="cursor:default">Together</span><div class="sub">Everyone is working</div></div>
+        <div class="meta"><div class="av"><svg viewBox="0 0 38 26"><circle cx="14" cy="13" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="24" cy="13" r="10" fill="none" stroke="currentColor" stroke-width="2.4"/></svg></div><span class="tl">Together</span><div class="sub">Everyone is working</div></div>
         <div class="track" id="togTrack"></div>
       </div>
       <div class="row"><div class="hide-s now" id="axisLbl"></div><div class="ticks" id="ticks"></div></div>
     </div>
     <div class="foot">
-      <button class="pill sec" id="add"><span style="font-size:20px;line-height:0">+</span> Add city</button>
-      <span class="hint" id="hint">Drag any bar to shift those hours. <span class="hm">Hover</span><span class="ht">Tap</span> the board to compare times.</span>
+      <button class="pill sec" id="add"><span style="font-size:20px;line-height:0">+</span> Add person</button>
+      <span class="hint" id="hint">Add names, then drag any bar to shift those hours. <span class="hm">Hover</span><span class="ht">Tap</span> the board to compare times.</span>
     </div>
   </section>
   <footer class="site">
@@ -226,16 +232,20 @@ function fmt(m){m=mod(Math.round(m));const h=Math.floor(m/60),mm=m%60;
   if(!h12)return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');
   return (h%12||12)+(mm?':'+String(mm).padStart(2,'0'):'')+(h<12?'am':'pm')}
 const dur=m=>{const h=Math.floor(m/60),r=m%60;return h&&r?`${h}h ${r}m`:h?`${h}h`:`${r}m`};
-const initials=n=>n.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const initials=n=>n.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const ini=p=>initials(p.who&&p.who.trim()?p.who:p.name);
 
 let people=[];
 function mk(c,s,e){return{name:c[0],tz:c[1],s:mod(Math.round(s/30)*30),e:mod(Math.round(e/30)*30)}}
 function recolor(){people.forEach((p,i)=>p.c=COLORS[i%COLORS.length])}
-function serialize(){return people.map(p=>`${slug(p.name)}~${p.s}~${p.e}`).join('_')}
+const clean=v=>String(v||'').replace(/[~_<>]/g,'').slice(0,20);
+const lbl=p=>p.who||p.name;
+function serialize(){return people.map(p=>`${slug(p.name)}~${p.s}~${p.e}`+(p.who?'~'+encodeURIComponent(p.who.trim()):'')).join('_')}
+function save(){const q=serialize();store.set('overlap:v1',q);try{history.replaceState(null,'','?with='+q)}catch(e){}}
 (function load(){
   let q=null;try{q=new URLSearchParams(location.search).get('with')}catch(e){}
   if(!q)q=store.get('overlap:v1');
-  if(q)people=q.split('_').map(x=>{const[a,s,e]=x.split('~');const c=CITIES.find(c=>slug(c[0])===a);return c&&isFinite(+s)&&isFinite(+e)?mk(c,+s,+e):null}).filter(Boolean).slice(0,5);
+  if(q)people=q.split('_').map(x=>{const[a,s,e,w]=x.split('~');const c=CITIES.find(c=>slug(c[0])===a);if(!(c&&isFinite(+s)&&isFinite(+e)))return null;const p=mk(c,+s,+e);if(w)try{p.who=clean(decodeURIComponent(w))}catch(er){}return p}).filter(Boolean).slice(0,5);
   if(!people.length)people=[mk(CITIES[0],960,60),mk(CITIES.find(c=>c[0]==='San Francisco'),480,1020)];
   recolor();
 })();
@@ -268,10 +278,10 @@ function render(){
   const tb=tr.map(x=>`<div class="tb" style="left:${x.a/SLOTS*100}%;width:${(x.b-x.a)/SLOTS*100}%"></div>`).join('')+`<div class="tn" style="left:${nowMin/1440*100}%"></div>`;
   $('rows').innerHTML=people.map((p,k)=>{const o=parts(p.tz,now);
     return `<div class="row"><div class="meta">
-      <button class="av" style="background:${p.c}" data-pick="${k}" aria-label="Change ${esc(p.name)}">${esc(initials(p.name))}</button>
-      <button class="city" data-pick="${k}">${esc(p.name)} <span class="now">${esc(o.weekday)} ${fmt(+o.hour*60+ +o.minute)}</span></button>
-      ${people.length>1?`<button class="x" data-rm="${k}" aria-label="Remove ${esc(p.name)}">×</button>`:'<span></span>'}
-      <div class="sub"><select data-k="${k}" data-f="s" aria-label="${esc(p.name)} start">${opts(p.s)}</select>→<select data-k="${k}" data-f="e" aria-label="${esc(p.name)} end">${opts(p.e)}</select></div>
+      <button class="av" style="background:${p.c}" data-pick="${k}" aria-label="Change city for ${esc(lbl(p))}">${esc(ini(p))}</button>
+      <div class="id"><input class="who" data-k="${k}" value="${esc(p.who||'')}" placeholder="Name" size="${Math.max(4,(p.who||'').length+1)}" maxlength="20" autocomplete="off" aria-label="Name for row ${k+1}"><button class="city" data-pick="${k}" title="Change city">${esc(p.name)} <span class="now">${fmt(+o.hour*60+ +o.minute)}</span></button></div>
+      ${people.length>1?`<button class="x" data-rm="${k}" aria-label="Remove ${esc(lbl(p))}">×</button>`:'<span></span>'}
+      <div class="sub"><select data-k="${k}" data-f="s" aria-label="${esc(lbl(p))} start">${opts(p.s)}</select>→<select data-k="${k}" data-f="e" aria-label="${esc(lbl(p))} end">${opts(p.e)}</select></div>
     </div><div class="track">${tb}${segHTML(C.work[k],k,`${fmt(p.s)}–${fmt(p.e)}`)}</div></div>`}).join('');
   $('togTrack').innerHTML=tb+segHTML(C.tog,-1,dur(C.total),4);
   const bi=tr.reduce((m,x,i)=>x.b-x.a>tr[m].b-tr[m].a?i:m,0);
@@ -280,8 +290,7 @@ function render(){
   $('axisLbl').textContent=`${people[0].name} time`;
   $('logo').classList.toggle('on',C.total>0);
   headline();celebrate();
-  const q=serialize();store.set('overlap:v1',q);
-  try{history.replaceState(null,'','?with='+q)}catch(e){}
+  save();
 }
 function ticks(){
   const w=$('ticks').clientWidth||600,step=w<420?6:w<700?4:3;
@@ -294,7 +303,7 @@ function headline(){
   if(!t){cancelAnimationFrame(raf);shown=0;h.innerHTML='<span class="dim">No overlap yet</span>'}
   else{if(!h.querySelector('.n'))h.innerHTML='<span class="n"></span> together';countTo(t)}
   const b=C.best;
-  $('best').innerHTML=b?'<span>Best window</span>'+people.map((p,k)=>{const st=b.a*STEP-C.o0+C.off[k];return `<span class="chip"><i style="background:${p.c}"></i>${esc(p.name)} <b>${fmt(st)}–${fmt(st+b.len*STEP)}</b></span>`}).join('')
+  $('best').innerHTML=b?'<span>Best window</span>'+people.map((p,k)=>{const st=b.a*STEP-C.o0+C.off[k];return `<span class="chip"><i style="background:${p.c}"></i>${esc(lbl(p))} <b>${fmt(st)}–${fmt(st+b.len*STEP)}</b></span>`}).join('')
     :'<span>Drag a bar until it touches the others, or stretch someone\'s hours.</span>';
 }
 function countTo(t){
@@ -352,7 +361,7 @@ function scrub(e){
   if(x<0||x>r.width){hideHover();return false}
   const base=Math.round(x/r.width*SLOTS)*STEP,pc=base/1440;
   hov.style.left=pc*100+'%';hov.classList.add('on');hov.classList.toggle('r',pc>.75);hov.classList.toggle('l',pc<.2);
-  $('tip').innerHTML=people.map((p,k)=>`${esc(p.name)} <b>${fmt(base-C.o0+C.off[k])}</b>`).join('<br>');return true}
+  $('tip').innerHTML=people.map((p,k)=>`${esc(lbl(p))} <b>${fmt(base-C.o0+C.off[k])}</b>`).join('<br>');return true}
 $('grid').addEventListener('pointermove',e=>{if(!drag&&e.pointerType==='mouse')scrub(e)});
 $('grid').addEventListener('pointerdown',e=>{
   if(e.pointerType==='mouse'||e.target.closest('.seg[data-k],button,select'))return;
@@ -361,6 +370,14 @@ $('grid').addEventListener('pointerdown',e=>{
 });
 $('grid').addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')hideHover()});
 
+$('rows').addEventListener('input',e=>{
+  const w=e.target.closest('.who');if(!w)return;
+  const v=clean(w.value);if(v!==w.value)w.value=v;w.size=Math.max(4,v.length+1);
+  const p=people[+w.dataset.k];p.who=v;
+  w.closest('.meta').querySelector('.av').textContent=ini(p);
+  headline();save();
+});
+$('rows').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.closest('.who'))e.target.blur()});
 $('rows').addEventListener('change',e=>{const s=e.target.closest('select');if(!s)return;people[+s.dataset.k][s.dataset.f]=+s.value;render()});
 $('rows').addEventListener('click',e=>{
   const rm=e.target.closest('[data-rm]');if(rm){people.splice(+rm.dataset.rm,1);recolor();render();return}
@@ -373,15 +390,15 @@ function openPicker(k){pickFor=k;$('q').value='';act=0;fill();$('scrim').classLi
 function closePicker(){$('scrim').classList.remove('on')}
 function fill(){
   const q=slug($('q').value),now=new Date();
-  const taken=new Set(people.map(p=>p.name));
-  const list=CITIES.filter(c=>!taken.has(c[0])&&(!q||slug(c[0]).includes(q)||slug(c[1]).includes(q))).slice(0,40);
+  const list=CITIES.filter(c=>(!q||slug(c[0]).includes(q)||slug(c[1]).includes(q))).slice(0,40);
   act=Math.min(act,Math.max(0,list.length-1));
   $('list').innerHTML=list.length?list.map((c,i)=>{const o=parts(c[1],now);return `<li><button class="${i===act?'k':''}" data-c="${esc(c[0])}"><span>${esc(c[0])}</span><small>${fmt(+o.hour*60+ +o.minute)} · ${gmt(offset(c[1]))}</small></button></li>`}).join(''):'<li class="empty">No city by that name yet.</li>';
 }
 function choose(name){
   const c=CITIES.find(c=>c[0]===name);if(!c)return;
   if(pickFor===null){people.push(mk(c,540,1080))}else{const p=people[pickFor];p.name=c[0];p.tz=c[1]}
-  recolor();closePicker();render();buzz(6);
+  const isNew=pickFor===null;recolor();closePicker();render();buzz(6);
+  if(isNew){const w=document.querySelector(`.who[data-k="${people.length-1}"]`);if(w)setTimeout(()=>w.focus(),60)}
 }
 $('q').addEventListener('input',()=>{act=0;fill()});
 $('q').addEventListener('keydown',e=>{const b=[...$('list').querySelectorAll('button')];
